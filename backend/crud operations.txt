@@ -1,0 +1,312 @@
+# backend crud operations documentation
+
+this document provides a comprehensive overview of all crud (create, read, update, delete) operations available in the travel booking platform backend.
+
+## api endpoints overview
+
+### base url: `http://localhost:5000/api`
+
+---
+
+## user management (`/api/users`)
+
+### create operations
+
+#### user registration
+```
+post /api/users/register
+content-type: application/json
+
+{
+  "name": "john doe",
+  "email": "john@example.com", 
+  "password": "password123",
+  "phone": "+1234567890",
+  "role": "user" // optional: "user" | "admin"
+}
+```
+
+validation rules:
+- `name`: required, string
+- `email`: required, valid email format
+- `password`: required, string
+- `phone`: required, string
+- `role`: optional, enum ['user', 'admin']
+
+response:
+```
+{
+  "success": true,
+  "message": "user registered successfully"
+}
+```
+
+#### user login
+```
+post /api/users/login
+content-type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+validation rules:
+- `email`: required, valid email format
+- `password`: required, string
+
+response:
+```
+{
+  "success": true,
+  "message": "login successful",
+  "token": "eyjhbgcioijiuzi1niisinr5cci6ikpxvcj9..."
+}
+```
+
+#### admin login
+```
+post /api/users/admin/login
+content-type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+```
+
+validation rules:
+- `email`: required, valid email format
+- `password`: required, string
+
+response:
+```
+{
+  "success": true,
+  "message": "admin login successful",
+  "token": "eyjhbgcioijiuzi1niisinr5cci6ikpxvcj9..."
+}
+```
+
+### read operations
+
+#### get user profile
+```
+get /api/users/profile
+authorization: bearer <jwt_token>
+```
+
+access control: user role only
+
+response:
+```
+{
+  "success": true,
+  "data": {
+    "_id": "user_id",
+    "name": "john doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "role": "user",
+    "isactive": true,
+    "createdat": "2024-01-01t00:00:00.000z",
+    "updatedat": "2024-01-01t00:00:00.000z"
+  }
+}
+```
+
+### update operations
+
+#### update user profile
+```
+put /api/users/profile
+authorization: bearer <jwt_token>
+content-type: application/json
+
+{
+  "name": "john smith",
+  "phone": "+0987654321"
+}
+```
+
+access control: user role only
+
+response:
+```
+{
+  "success": true,
+  "data": {
+    "_id": "user_id",
+    "name": "john smith",
+    "email": "john@example.com",
+    "phone": "+0987654321",
+    "role": "user",
+    "isactive": true,
+    "updatedat": "2024-01-01t00:00:00.000z"
+  }
+}
+```
+
+---
+
+## trip management (`/api/trips`)
+
+### create operations
+
+#### create trip
+```
+post /api/trips
+authorization: bearer <admin_token>
+content-type: application/json
+
+{
+  "from": "new york",
+  "to": "boston",
+  "departuretime": "2024-12-01t10:00:00.000z",
+  "arrivaltime": "2024-12-01t14:00:00.000z",
+  "transporttype": "flight",
+  "priceperseat": 150,
+  "totalseats": 50,
+  "imageurl": "https://example.com/image.jpg" // optional
+}
+```
+
+access control: admin role only
+
+validation rules:
+- `from`: required, string
+- `to`: required, string
+- `departuretime`: required, valid date
+- `arrivaltime`: required, valid date
+- `transporttype`: required, enum ['flight', 'train', 'bus']
+- `priceperseat`: required, number, min: 0
+- `totalseats`: required, number, min: 1
+- `imageurl`: optional, string
+
+response:
+```
+{
+  "success": true,
+  "message": "trip created successfully",
+  "trip": {
+    "_id": "trip_id",
+    "from": "new york",
+    "to": "boston",
+    "departuretime": "2024-12-01t10:00:00.000z",
+    "arrivaltime": "2024-12-01t14:00:00.000z",
+    "transporttype": "flight",
+    "priceperseat": 150,
+    "totalseats": 50,
+    "seats": [],
+    "imageurl": "https://example.com/image.jpg",
+    "createdat": "2024-01-01t00:00:00.000z",
+    "updatedat": "2024-01-01t00:00:00.000z"
+  }
+}
+```
+
+---
+
+## booking management (`/api/bookings`)
+
+### create operations
+
+#### create booking
+```
+post /api/bookings
+authorization: bearer <user_token>
+content-type: application/json
+
+{
+  "tripid": "trip_id",
+  "seatcodes": ["a1", "a2", "b3"]
+}
+```
+
+access control: user role only
+
+validation rules:
+- `tripid`: required, string (valid trip id)
+- `seatcodes`: required, array of strings
+
+response:
+```
+{
+  "success": true,
+  "message": "booking created. proceed to payment.",
+  "booking": {
+    "_id": "booking_id",
+    "user": "user_id",
+    "trip": "trip_id",
+    "seatcodes": ["a1", "a2", "b3"],
+    "status": "pending",
+    "qrverified": false,
+    "totalamount": 450,
+    "paymentstatus": "unpaid",
+    "createdat": "2024-01-01t00:00:00.000z",
+    "updatedat": "2024-01-01t00:00:00.000z"
+  }
+}
+```
+
+---
+
+## payment management (`/api/payments`)
+
+### create operations
+
+#### create payment (card)
+```
+post /api/payments
+authorization: bearer <token>
+content-type: application/json
+
+{
+  "bookingid": "booking_id",
+  "method": "card",
+  "carddetails": {
+    "cardnumber": "4111111111111111",
+    "cardholdername": "john doe",
+    "expirydate": "12/25",
+    "cvv": "123"
+  }
+}
+```
+
+access control: authenticated users
+
+validation rules:
+- `bookingid`: required, string (valid booking id)
+- `method`: required, enum ['card', 'wallet']
+- `carddetails`: required when method is 'card'
+- `walletprovider`: required when method is 'wallet'
+
+response:
+```
+{
+  "success": true,
+  "message": "payment successful",
+  "payment": {
+    "_id": "payment_id",
+    "booking": "booking_id",
+    "user": "user_id",
+    "method": "card",
+    "carddetails": {
+      "cardnumber": "****1111",
+      "cardholdername": "john doe",
+      "expirydate": "12/25"
+    },
+    "amount": 300,
+    "currency": "usd",
+    "status": "completed",
+    "transactionid": "txn_123456789",
+    "paidat": "2024-01-01t00:00:00.000z",
+    "createdat": "2024-01-01t00:00:00.000z"
+  }
+}
+```
+
+---
+
+this is a simplified text version of the crud operations documentation for the travel booking platform backend. it includes endpoints, validation rules, and example responses.
