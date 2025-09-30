@@ -1,9 +1,9 @@
 Here’s a clean **README.md** draft for your MERN Stack Assignment project (without icons):
 
 ---
-#admin login : 
-# rajat@gmail.com
-# rajat@123
+## admin login : open vercel link : https://travelgobooking.vercel.app/
+## rajat@gmail.com
+## rajat@123
 # MERN Stack Assignment – HRMS Dashboard
 
 This project is part of the hiring process at **PSQUARE COMPANY**. It demonstrates a full-stack application built using **MongoDB, Express.js, React, and Node.js** with JWT-based authentication, role-based authorization, and trip booking management.
